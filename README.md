@@ -3,6 +3,8 @@
 けんさんのパワーリフティング練習記録を管理するためのリポジトリです。
 
 ## 📁 ディレクトリ構成
+
+```text
 training-log/
 ├── logs/ ← トレーニング記録（JSONファイル）
 │ ├── 2025-07-12.json
@@ -14,6 +16,7 @@ training-log/
 ├── viewer/ ← GitHub Pages用ビューワ（後で追加）
 └── README.md ← このファイル
 
+```
 ## 📝 記録方法（iPhoneで完結）
 
 1. ChatGPTに「今日の練習をJSONで出して」と言う
