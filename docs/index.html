@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Training Log Viewer</title>
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet" />
   <style>
-    body { font-family: sans-serif; padding: 20px; }
+    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
     header { text-align: center; margin-bottom: 20px; }
-    #calendar { max-width: 600px; margin: 0 auto 20px; }
+    #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .day-cell { border: 1px solid #ccc; padding: 10px; text-align: center; cursor: pointer; }
+    .day-cell.disabled { color: #999; cursor: default; }
+    .day-cell.has-log { background-color: #cfe3ff; }
+    .day-cell:hover:not(.disabled) { background-color: #e3f2fd; }
     .session { margin-bottom: 20px; }
-    .session h2 { margin-bottom: 5px; font-size: 1.2em; }
+    .session h2 { margin-bottom: 5px; font-size: 1.1em; }
     table { width: 100%; border-collapse: collapse; margin-top: 5px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
     th { background-color: #f4f4f4; }
@@ -20,46 +23,59 @@
   <header>
     <h1>Training Log Viewer</h1>
   </header>
+
+  <!-- カレンダー表示 -->
   <div id="calendar"></div>
+
   <main id="logContainer">
-    <p>カレンダーで日付を選択してください。</p>
+    <p>カレンダーの日付をクリックしてください。</p>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.js"></script>
   <script>
-    // ログがある日付のリスト
+    // ログがある日付（YYYY-MM-DD形式）のリスト
     const availableDates = ['2025-07-12'];
-    const calendarEl = document.getElementById('calendar');
-    const logContainer = document.getElementById('logContainer');
 
-    // FullCalendar 初期化
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      locale: 'ja',
-      dayMaxEvents: true,
-      events: availableDates.map(d => ({ title: '●', start: d })),
-      dateClick: info => {
-        const dateStr = info.dateStr;
-        if (availableDates.includes(dateStr)) {
-          fetchLog(dateStr);
-        } else {
-          logContainer.innerHTML = `<p>${dateStr} のログがありません</p>`;
-        }
+    // カレンダー描画
+    function renderCalendar(year, month) {
+      const calendar = document.getElementById('calendar');
+      calendar.innerHTML = '';
+      const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+      // 曜日ヘッダー
+      weekdays.forEach(w => {
+        const th = document.createElement('div');
+        th.textContent = w;
+        th.style.fontWeight = 'bold';
+        calendar.appendChild(th);
+      });
+      // 空セル
+      const firstDay = new Date(year, month, 1).getDay();
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div'); empty.className = 'day-cell disabled';
+        calendar.appendChild(empty);
       }
-    });
-    calendar.render();
+      // 日付セル
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const cell = document.createElement('div');
+        cell.className = 'day-cell';
+        cell.textContent = day;
+        if (availableDates.includes(dateStr)) {
+          cell.classList.add('has-log');
+          cell.addEventListener('click', () => fetchLog(dateStr));
+        } else {
+          cell.classList.add('disabled');
+        }
+        calendar.appendChild(cell);
+      }
+    }
 
-    // ログ取得＆表示
+    // ログフェッチ＆表示
     function fetchLog(date) {
-      fetch(`logs/${date}.json`)
-        .then(res => {
-          if (!res.ok) throw new Error('ログが見つかりません');
-          return res.json();
-        })
-        .then(data => renderLog(data))
-        .catch(err => {
-          logContainer.innerHTML = `<p>${err.message}</p>`;
-        });
+      fetch(`docs/logs/${date}.json`)
+        .then(res => { if (!res.ok) throw new Error('ログが見つかりません'); return res.json(); })
+        .then(renderLog)
+        .catch(err => { document.getElementById('logContainer').innerHTML = `<p>${err.message}</p>`; });
     }
 
     function renderLog(data) {
@@ -71,15 +87,16 @@
         html += `<table>`;
         html += `<tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
         session.sets.forEach(set => {
-          html += `<tr>`;
-          html += `<td>${set.weight}</td><td>${set.reps}</td><td>${set.rpe}</td><td>${set.comment}</td>`;
-          html += `</tr>`;
+          html += `<tr><td>${set.weight}</td><td>${set.reps}</td><td>${set.rpe}</td><td>${set.comment}</td></tr>`;
         });
-        html += `</table>`;
-        html += `</div>`;
+        html += `</table></div>`;
       });
-      logContainer.innerHTML = html;
+      document.getElementById('logContainer').innerHTML = html;
     }
+
+    // 初期化
+    const today = new Date();
+    renderCalendar(today.getFullYear(), today.getMonth());
   </script>
 </body>
 </html>
