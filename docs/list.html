@@ -28,126 +28,102 @@
       align-items: center;
     }
     header {
-      width: 100%;
-      max-width: 800px;
+      width: 100%; max-width: 800px;
       background: var(--card-bg);
       box-shadow: 0 2px 4px var(--shadow);
       padding: var(--spacing);
       border-radius: var(--radius);
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      position: sticky; top: 0; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center;
       margin-bottom: var(--spacing);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
-    header h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-    }
+    header h1 { font-size: 1.5rem; font-weight: 600; }
     header nav a {
       margin-left: var(--spacing);
       text-decoration: none;
       color: var(--primary);
       font-weight: 500;
-      transition: color 0.2s;
+      transition: color .2s;
     }
     header nav a:hover { color: var(--text); }
     #controls {
       width: 100%; max-width: 800px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: flex; justify-content: space-between; align-items: center;
       margin-bottom: var(--spacing);
     }
-    #controls label {
-      font-weight: 500;
-      color: var(--text);
-    }
+    #controls label { font-weight: 500; }
     #pageSize {
-      margin-left: 8px;
-      padding: 4px 8px;
+      margin-left: 8px; padding: 4px 8px;
       border-radius: var(--radius);
       border: 1px solid var(--border);
       background: var(--card-bg);
     }
     #pagination {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: flex; align-items: center; gap: 8px;
     }
     #pagination button {
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      padding: 6px 12px;
-      cursor: pointer;
-      transition: background 0.2s;
+      background: var(--primary); color: #fff;
+      border: none; border-radius: var(--radius);
+      padding: 6px 12px; cursor: pointer;
+      transition: background .2s;
     }
-    #pagination button:disabled {
-      background: var(--border);
-      cursor: default;
-    }
-    table {
-      width: 100%;
-      max-width: 800px;
-      border-collapse: collapse;
+    #pagination button:disabled { background: var(--border); cursor: default; }
+    #listContainer {
+      width: 100%; max-width: 800px;
+      display: flex; flex-direction: column; gap: var(--spacing);
       margin-bottom: var(--spacing);
     }
-    th, td {
-      border: 1px solid var(--border);
-      padding: 12px;
-      text-align: left;
-      vertical-align: top;
-    }
-    th {
-      background: var(--bg);
-      font-weight: 600;
-    }
-    tr.clickable { cursor: pointer; }
-    tr.clickable:hover { background: #f0f8ff; }
-    .detail-row td {
+    .log-card {
       background: var(--card-bg);
-      padding: var(--spacing);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 3px var(--shadow);
+      overflow: hidden;
     }
+    .summary {
+      display: flex; justify-content: space-between;
+      padding: var(--spacing);
+      cursor: pointer;
+    }
+    .summary .date { font-weight: 600; }
+    .summary .note { color: var(--muted); }
+    .details {
+      display: none;
+      padding: 0 var(--spacing) var(--spacing);
+    }
+    .log-card.open .details { display: block; }
     .session {
       margin-bottom: var(--spacing);
     }
     .session h2 {
-      margin-bottom: 8px;
       font-size: 1.1rem;
-      color: var(--primary);
       font-weight: 500;
+      color: var(--primary);
+      margin-bottom: 8px;
     }
-    .session .table-wrapper {
-      width: 100%;
+    .table-wrapper {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
-      margin-bottom: var(--spacing);
     }
-    .session table {
-      width: 100%;
-      min-width: 600px;
+    .table-wrapper table {
+      width: 100%; min-width: 600px;
       border-collapse: collapse;
     }
-    .session th, .session td {
+    .table-wrapper th,
+    .table-wrapper td {
       border: 1px solid var(--border);
-      padding: 8px;
-      text-align: center;
-      white-space: normal;
-      word-break: break-word;
+      padding: 8px; text-align: center;
+      white-space: normal; word-break: break-word;
     }
-    .session th {
-      background: var(--bg);
-      font-weight: 600;
+    .table-wrapper th {
+      background: var(--bg); font-weight: 600;
     }
-    .session tr:last-child td { border-bottom: none; }
+    .table-wrapper tr:last-child td { border-bottom: none; }
     @media (max-width: 600px) {
-      .session th, .session td { padding: 6px; font-size: 0.875rem; }
       header { padding: 12px; }
       #controls { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .summary { flex-direction: column; gap: 4px; }
+      .session h2 { font-size: 1rem; }
+      .table-wrapper th, .table-wrapper td { padding: 6px; font-size: 0.875rem; }
     }
   </style>
 </head>
@@ -172,97 +148,80 @@
     <div id="pagination"></div>
   </div>
 
-  <table id="logList">
-    <thead>
-      <tr><th>日付</th><th>ノート</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div id="listContainer"></div>
 
   <script>
     let logs = [];
     let currentPage = 1;
     let pageSize = 10;
-    const listBody = document.querySelector('#logList tbody');
+    const listContainer = document.getElementById('listContainer');
     const paginationEl = document.getElementById('pagination');
 
     function renderPagination() {
-      const totalPages = Math.ceil(logs.length / pageSize) || 1;
+      const total = logs.length;
+      const totalPages = Math.ceil(total / pageSize) || 1;
       paginationEl.innerHTML = '';
-      const prevBtn = document.createElement('button');
-      prevBtn.textContent = '前へ'; prevBtn.disabled = currentPage === 1;
-      prevBtn.addEventListener('click', () => { currentPage--; renderList(); });
-      const nextBtn = document.createElement('button');
-      nextBtn.textContent = '次へ'; nextBtn.disabled = currentPage === totalPages;
-      nextBtn.addEventListener('click', () => { currentPage++; renderList(); });
+      const prev = document.createElement('button');
+      prev.textContent = '前へ'; prev.disabled = currentPage === 1;
+      prev.addEventListener('click', () => { currentPage--; renderList(); });
+      const next = document.createElement('button');
+      next.textContent = '次へ'; next.disabled = currentPage === totalPages;
+      next.addEventListener('click', () => { currentPage++; renderList(); });
       const info = document.createElement('span');
-      info.textContent = ` ${currentPage} / ${totalPages} ページ`;
-      paginationEl.append(prevBtn, info, nextBtn);
+      info.textContent = ` ${currentPage} / ${totalPages} ページ (` +
+                         `${total} 件中 ${(currentPage-1)*pageSize+1}-${Math.min(currentPage*pageSize,total)})`;
+      paginationEl.append(prev, info, next);
     }
 
-    function toggleDetail(row, log) {
-      const next = row.nextElementSibling;
-      if (next && next.classList.contains('detail-row')) {
-        next.remove();
-        return;
-      }
-      document.querySelectorAll('.detail-row').forEach(el => el.remove());
-      const detailTr = document.createElement('tr'); detailTr.classList.add('detail-row');
-      const td = document.createElement('td'); td.colSpan = 2;
-      let html = '';
-      log.sessions.forEach(session => {
-        html += `<div class="session"><h2>${session.lift}${session.variation? ' ('+session.variation+')':''}</h2>`;
-        html += '<div class="table-wrapper"><table>' +
-                '<tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>1RM</th><th>e1RM</th><th>コメント</th></tr>';
-        session.sets.forEach(s => {
-          html += `<tr>` +
-                  `<td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td>` +
-                  `<td>${s['1RM'] ?? '-'}</td><td>${s.e1RM ?? '-'}</td>` +
-                  `<td>${s.comment}</td></tr>`;
-        });
-        html += '</table></div></div>';
-      });
-      td.innerHTML = html;
-      detailTr.appendChild(td);
-      row.parentNode.insertBefore(detailTr, row.nextSibling);
+    function toggleDetail(card) {
+      card.classList.toggle('open');
     }
 
     function renderList() {
-      listBody.innerHTML = '';
+      listContainer.innerHTML = '';
       if (!logs.length) {
-        listBody.innerHTML = '<tr><td colspan="2">ログがありません</td></tr>';
+        listContainer.innerHTML = '<p>ログがありません</p>';
         paginationEl.innerHTML = '';
         return;
       }
       const start = (currentPage - 1) * pageSize;
-      const end = start + pageSize;
-      logs.slice(start, end).forEach(log => {
-        const tr = document.createElement('tr'); tr.classList.add('clickable');
-        tr.innerHTML = `<td>${log.date}</td><td>${log.notes || ''}</td>`;
-        tr.addEventListener('click', () => toggleDetail(tr, log));
-        listBody.appendChild(tr);
+      const slice = logs.slice(start, start + pageSize);
+      slice.forEach(log => {
+        const card = document.createElement('div'); card.className = 'log-card';
+        const summ = document.createElement('div'); summ.className = 'summary';
+        summ.innerHTML = `<span class="date">${log.date}</span>` +
+                         `<span class="note">${log.notes || ''}</span>`;
+        summ.addEventListener('click', () => toggleDetail(card));
+        card.appendChild(summ);
+        const det = document.createElement('div'); det.className = 'details';
+        log.sessions.forEach(sess => {
+          const sec = document.createElement('div'); sec.className = 'session';
+          sec.innerHTML = `<h2>${sess.lift}${sess.variation? ' ('+sess.variation+')':''}</h2>` +
+            `<div class="table-wrapper"><table>` +
+            `<tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>1RM</th><th>e1RM</th><th>コメント</th></tr>` +
+            sess.sets.map(s =>
+              `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td>` +
+              `<td>${s['1RM'] ?? '-'}</td><td>${s.e1RM ?? '-'}</td>` +
+              `<td>${s.comment}</td></tr>`).join('') +
+            `</table></div>`;
+          det.appendChild(sec);
+        });
+        card.appendChild(det);
+        listContainer.appendChild(card);
       });
       renderPagination();
     }
 
     document.getElementById('pageSize').addEventListener('change', e => {
-      pageSize = parseInt(e.target.value);
-      currentPage = 1;
-      renderList();
+      pageSize = +e.target.value; currentPage = 1; renderList();
     });
 
     function init() {
       fetch('./logs/index.json')
-        .then(res => { if (!res.ok) throw new Error('インデックスが見つかりません'); return res.json(); })
+        .then(r => r.ok? r.json(): Promise.reject('インデックスが見つかりません'))
         .then(dates => Promise.all(dates.map(d => fetch(`./logs/${d}.json`).then(r => r.json()))))
-        .then(data => {
-          logs = data.sort((a, b) => a.date < b.date ? 1 : -1);
-          renderList();
-        })
-        .catch(err => {
-          console.error(err);
-          listBody.innerHTML = `<tr><td colspan=\"2\">${err.message}</td></tr>`;
-        });
+        .then(arr => { logs = arr.sort((a,b)=> a.date<b.date?1:-1); renderList(); })
+        .catch(err => { console.error(err); listContainer.innerHTML = `<p>${err}</p>`; });
     }
     init();
   </script>
