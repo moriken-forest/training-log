@@ -4,38 +4,161 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Training Log List View</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    header { text-align: center; margin-bottom: 20px; }
-    header nav { margin-top: 10px; }
-    header nav a { margin: 0 10px; text-decoration: none; color: #007acc; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background-color: #f4f4f4; text-align: left; }
+    :root {
+      --primary: #3b82f6;
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: rgba(0,0,0,0.1);
+      --radius: 8px;
+      --spacing: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: var(--spacing);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      width: 100%;
+      max-width: 800px;
+      background: var(--card-bg);
+      box-shadow: 0 2px 4px var(--shadow);
+      padding: var(--spacing);
+      border-radius: var(--radius);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      margin-bottom: var(--spacing);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    header nav a {
+      margin-left: var(--spacing);
+      text-decoration: none;
+      color: var(--primary);
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    header nav a:hover { color: var(--text); }
+    #controls {
+      width: 100%; max-width: 800px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing);
+    }
+    #controls label {
+      font-weight: 500;
+      color: var(--text);
+    }
+    #pageSize {
+      margin-left: 8px;
+      padding: 4px 8px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+    }
+    #pagination {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #pagination button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #pagination button:disabled {
+      background: var(--border);
+      cursor: default;
+    }
+    table {
+      width: 100%;
+      max-width: 800px;
+      border-collapse: collapse;
+      margin-bottom: var(--spacing);
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: var(--bg);
+      font-weight: 600;
+    }
     tr.clickable { cursor: pointer; }
-    tr.clickable:hover { background-color: #f0f8ff; }
-    .detail-row td { background-color: #fafafa; padding: 10px; }
-    .session { margin-bottom: 15px; }
-    .session h2 { margin-bottom: 5px; font-size: 1.1em; }
-    .session table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-    .session th, .session td { border: 1px solid #ddd; padding: 6px; text-align: center; }
-    .session th { background-color: #eaeaea; }
-    #controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    #pagination { text-align: center; }
-    #pagination button { margin: 0 5px; }
+    tr.clickable:hover { background: #f0f8ff; }
+    .detail-row td {
+      background: var(--card-bg);
+      padding: var(--spacing);
+    }
+    .session {
+      margin-bottom: var(--spacing);
+    }
+    .session h2 {
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+      color: var(--primary);
+      font-weight: 500;
+    }
+    .session .table-wrapper {
+      overflow-x: auto;
+    }
+    .session table {
+      width: 100%; min-width: 600px;
+      border-collapse: collapse;
+    }
+    .session th, .session td {
+      border: 1px solid var(--border);
+      padding: 8px;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+    }
+    .session th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .session tr:last-child td { border-bottom: none; }
+    @media (max-width: 600px) {
+      .session th, .session td { padding: 6px; font-size: 0.875rem; }
+      header { padding: 12px; }
+      #controls { flex-direction: column; align-items: flex-start; gap: 8px; }
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>Training Log List View</h1>
     <nav>
-      <a href="index.html">カレンダー表示</a> |
-      <a href="list.html">一覧表示</a>
+      <a href="index.html">カレンダー</a>
+      <a href="list.html">一覧</a>
     </nav>
   </header>
 
   <div id="controls">
-    <label>表示件数:
+    <label>
+      表示件数:
       <select id="pageSize">
         <option value="10">10</option>
         <option value="50">50</option>
@@ -63,12 +186,10 @@
       const totalPages = Math.ceil(logs.length / pageSize) || 1;
       paginationEl.innerHTML = '';
       const prevBtn = document.createElement('button');
-      prevBtn.textContent = '前へ';
-      prevBtn.disabled = currentPage === 1;
+      prevBtn.textContent = '前へ'; prevBtn.disabled = currentPage === 1;
       prevBtn.addEventListener('click', () => { currentPage--; renderList(); });
       const nextBtn = document.createElement('button');
-      nextBtn.textContent = '次へ';
-      nextBtn.disabled = currentPage === totalPages;
+      nextBtn.textContent = '次へ'; nextBtn.disabled = currentPage === totalPages;
       nextBtn.addEventListener('click', () => { currentPage++; renderList(); });
       const info = document.createElement('span');
       info.textContent = ` ${currentPage} / ${totalPages} ページ`;
@@ -77,23 +198,22 @@
 
     function toggleDetail(row, log) {
       const next = row.nextElementSibling;
-      if (next && next.classList.contains('detail-row')) {
-        next.remove();
-        return;
-      }
+      if (next && next.classList.contains('detail-row')) { next.remove(); return; }
       document.querySelectorAll('.detail-row').forEach(el => el.remove());
-      const detailTr = document.createElement('tr');
-      detailTr.classList.add('detail-row');
-      const td = document.createElement('td');
-      td.colSpan = 2;
+      const detailTr = document.createElement('tr'); detailTr.classList.add('detail-row');
+      const td = document.createElement('td'); td.colSpan = 2;
       let html = '';
       log.sessions.forEach(session => {
-        html += `<div class="session"><h2>${session.lift}${session.variation ? ' ('+session.variation+')':''}</h2>`;
-        html += '<table><tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>';
+        html += `<div class="session"><h2>${session.lift}${session.variation? ' ('+session.variation+')':''}</h2>`;
+        html += '<div class="table-wrapper"><table>' +
+                '<tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>1RM</th><th>e1RM</th><th>コメント</th></tr>';
         session.sets.forEach(s => {
-          html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`;
+          html += `<tr>` +
+                  `<td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td>` +
+                  `<td>${s['1RM'] ?? '-'}</td><td>${s.e1RM ?? '-'}</td>` +
+                  `<td>${s.comment}</td></tr>`;
         });
-        html += '</table></div>';
+        html += '</table></div></div>';
       });
       td.innerHTML = html;
       detailTr.appendChild(td);
@@ -102,7 +222,7 @@
 
     function renderList() {
       listBody.innerHTML = '';
-      if (logs.length === 0) {
+      if (!logs.length) {
         listBody.innerHTML = '<tr><td colspan="2">ログがありません</td></tr>';
         paginationEl.innerHTML = '';
         return;
@@ -110,8 +230,7 @@
       const start = (currentPage - 1) * pageSize;
       const end = start + pageSize;
       logs.slice(start, end).forEach(log => {
-        const tr = document.createElement('tr');
-        tr.classList.add('clickable');
+        const tr = document.createElement('tr'); tr.classList.add('clickable');
         tr.innerHTML = `<td>${log.date}</td><td>${log.notes || ''}</td>`;
         tr.addEventListener('click', () => toggleDetail(tr, log));
         listBody.appendChild(tr);
@@ -127,20 +246,15 @@
 
     function init() {
       fetch('./logs/index.json')
-        .then(res => {
-          if (!res.ok) throw new Error('インデックスが見つかりません');
-          return res.json();
-        })
-        .then(dates => Promise.all(
-          dates.map(d => fetch(`./logs/${d}.json`).then(r => r.json()))
-        ))
+        .then(res => { if (!res.ok) throw new Error('インデックスが見つかりません'); return res.json(); })
+        .then(dates => Promise.all(dates.map(d => fetch(`./logs/${d}.json`).then(r => r.json()))))
         .then(data => {
           logs = data.sort((a, b) => a.date < b.date ? 1 : -1);
           renderList();
         })
         .catch(err => {
           console.error(err);
-          listBody.innerHTML = `<tr><td colspan="2">${err.message}</td></tr>`;
+          listBody.innerHTML = `<tr><td colspan=\"2\">${err.message}</td></tr>`;
         });
     }
     init();
