@@ -27,67 +27,59 @@
 
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.js"></script>
   <script>
-    // ログがある日付のリスト (手動更新 or 自動生成)
-    const availableDates = [
-      '2025-07-12'
-      // 他の日付も追加していく
-    ];
+    // ログがある日付のリスト
+    const availableDates = ['2025-07-12'];
+    const calendarEl = document.getElementById('calendar');
+    const logContainer = document.getElementById('logContainer');
 
-    document.addEventListener('DOMContentLoaded', function() {
-      const calendarEl = document.getElementById('calendar');
-      const logContainer = document.getElementById('logContainer');
-
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'ja',
-        dayMaxEvents: true,
-        selectable: true,
-        events: availableDates.map(d => ({ title: 'Log', start: d })),
-        dateClick: function(info) {
-          if (availableDates.includes(info.dateStr)) {
-            fetchLog(info.dateStr);
-          } else {
-            logContainer.innerHTML = `<p>${info.dateStr} のログがありません</p>`;
-          }
+    // FullCalendar 初期化
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      locale: 'ja',
+      dayMaxEvents: true,
+      events: availableDates.map(d => ({ title: '●', start: d })),
+      dateClick: info => {
+        const dateStr = info.dateStr;
+        if (availableDates.includes(dateStr)) {
+          fetchLog(dateStr);
+        } else {
+          logContainer.innerHTML = `<p>${dateStr} のログがありません</p>`;
         }
-      });
-
-      calendar.render();
-
-      function fetchLog(date) {
-        const url = `logs/${date}.json`;
-        fetch(url)
-          .then(res => {
-            if (!res.ok) throw new Error('ログが見つかりません');
-            return res.json();
-          })
-          .then(data => renderLog(data))
-          .catch(err => {
-            logContainer.innerHTML = `<p>${err.message}</p>`;
-          });
-      }
-
-      function renderLog(data) {
-        let html = `<h2>${data.date} のトレーニング記録</h2>`;
-        if (data.notes) html += `<p><em>${data.notes}</em></p>`;
-
-        data.sessions.forEach(session => {
-          html += `<div class="session">`;
-          html += `<h2>${session.lift}${session.variation ? ' (' + session.variation + ')' : ''}</h2>`;
-          html += `<table>`;
-          html += `  <tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
-          session.sets.forEach(set => {
-            html += `  <tr>`;
-            html += `<td>${set.weight}</td><td>${set.reps}</td><td>${set.rpe}</td><td>${set.comment}</td>`;
-            html += `  </tr>`;
-          });
-          html += `</table>`;
-          html += `</div>`;
-        });
-
-        logContainer.innerHTML = html;
       }
     });
+    calendar.render();
+
+    // ログ取得＆表示
+    function fetchLog(date) {
+      fetch(`logs/${date}.json`)
+        .then(res => {
+          if (!res.ok) throw new Error('ログが見つかりません');
+          return res.json();
+        })
+        .then(data => renderLog(data))
+        .catch(err => {
+          logContainer.innerHTML = `<p>${err.message}</p>`;
+        });
+    }
+
+    function renderLog(data) {
+      let html = `<h2>${data.date} のトレーニング記録</h2>`;
+      if (data.notes) html += `<p><em>${data.notes}</em></p>`;
+      data.sessions.forEach(session => {
+        html += `<div class="session">`;
+        html += `<h2>${session.lift}${session.variation ? ' (' + session.variation + ')' : ''}</h2>`;
+        html += `<table>`;
+        html += `<tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
+        session.sets.forEach(set => {
+          html += `<tr>`;
+          html += `<td>${set.weight}</td><td>${set.reps}</td><td>${set.rpe}</td><td>${set.comment}</td>`;
+          html += `</tr>`;
+        });
+        html += `</table>`;
+        html += `</div>`;
+      });
+      logContainer.innerHTML = html;
+    }
   </script>
 </body>
 </html>
