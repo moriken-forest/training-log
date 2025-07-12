@@ -9,9 +9,9 @@
     header { text-align: center; margin-bottom: 20px; }
     header nav { margin-top: 10px; }
     header nav a { margin: 0 10px; text-decoration: none; color: #007acc; }
-    table { width: 100%; border-collapse: collapse; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background-color: #f4f4f4; }
+    th { background-color: #f4f4f4; text-align: left; }
     tr.clickable { cursor: pointer; }
     tr.clickable:hover { background-color: #f0f8ff; }
     .detail-row td { background-color: #fafafa; padding: 10px; }
@@ -20,16 +20,26 @@
     .session table { width: 100%; border-collapse: collapse; margin-top: 5px; }
     .session th, .session td { border: 1px solid #ddd; padding: 6px; text-align: center; }
     .session th { background-color: #eaeaea; }
+    #pagination { text-align: center; margin: 10px 0; }
+    #pagination button { margin: 0 5px; }
   </style>
 </head>
 <body>
   <header>
     <h1>Training Log List View</h1>
-    <nav>
-      <a href="index.html">カレンダー表示</a> |
-      <a href="list.html">一覧表示</a>
-    </nav>
   </header>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <label>表示件数:
+      <select id="pageSize">
+        <option value="10">10</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select> 件
+    </label>
+    <nav>
+      <a href="index.html">🏠 カレンダー表示</a>
+    </nav>
+  </div>
 
   <table id="logList">
     <thead>
@@ -38,32 +48,46 @@
     <tbody></tbody>
   </table>
 
+  <div id="pagination"></div>
+
   <script>
     let logs = [];
+    let currentPage = 1;
+    let pageSize = 10;
     const listBody = document.querySelector('#logList tbody');
+    const paginationEl = document.getElementById('pagination');
 
-    // アコーディオン表示
+    function renderPagination() {
+      const totalPages = Math.ceil(logs.length / pageSize) || 1;
+      paginationEl.innerHTML = '';
+      const prevBtn = document.createElement('button');
+      prevBtn.textContent = '前へ';
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.addEventListener('click', () => { currentPage--; renderList(); });
+      const nextBtn = document.createElement('button');
+      nextBtn.textContent = '次へ';
+      nextBtn.disabled = currentPage === totalPages;
+      nextBtn.addEventListener('click', () => { currentPage++; renderList(); });
+      const info = document.createElement('span');
+      info.textContent = ` ${currentPage} / ${totalPages} ページ`;
+      paginationEl.append(prevBtn, info, nextBtn);
+    }
+
     function toggleDetail(row, log) {
       const next = row.nextElementSibling;
-      // 既に開いている場合は閉じる
       if (next && next.classList.contains('detail-row')) {
         next.remove();
         return;
       }
-      // 他のdetail行を閉じる
-      document.querySelectorAll('.detail-row').forEach(dr => dr.remove());
-      // 新しいdetail行を生成
+      document.querySelectorAll('.detail-row').forEach(el => el.remove());
       const detailTr = document.createElement('tr');
       detailTr.classList.add('detail-row');
-      const td = document.createElement('td');
-      td.colSpan = 2;
+      const td = document.createElement('td'); td.colSpan = 2;
       let html = '';
       log.sessions.forEach(session => {
-        html += `<div class="session"><h2>${session.lift}${session.variation? ' ('+session.variation+')':''}</h2>`;
+        html += `<div class="session"><h2>${session.lift}${session.variation ? ' ('+session.variation+')':''}</h2>`;
         html += '<table><tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>';
-        session.sets.forEach(s => {
-          html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`;
-        });
+        session.sets.forEach(s => html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`);
         html += '</table></div>';
       });
       td.innerHTML = html;
@@ -75,23 +99,31 @@
       listBody.innerHTML = '';
       if (logs.length === 0) {
         listBody.innerHTML = '<tr><td colspan="2">ログがありません</td></tr>';
+        paginationEl.innerHTML = '';
         return;
       }
-      logs.forEach(log => {
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      logs.slice(start, end).forEach(log => {
         const tr = document.createElement('tr');
         tr.classList.add('clickable');
         tr.innerHTML = `<td>${log.date}</td><td>${log.notes || ''}</td>`;
         tr.addEventListener('click', () => toggleDetail(tr, log));
         listBody.appendChild(tr);
       });
+      renderPagination();
     }
+
+    document.getElementById('pageSize').addEventListener('change', e => {
+      pageSize = parseInt(e.target.value);
+      currentPage = 1;
+      renderList();
+    });
 
     function init() {
       fetch('./logs/index.json')
         .then(res => { if (!res.ok) throw new Error('インデックスが見つかりません'); return res.json(); })
-        .then(dates => Promise.all(
-          dates.map(d => fetch(`./logs/${d}.json`).then(r => r.json()))
-        ))
+        .then(dates => Promise.all(dates.map(d => fetch(`./logs/${d}.json`).then(r => r.json()))))
         .then(data => {
           logs = data.sort((a, b) => a.date < b.date ? 1 : -1);
           renderList();
@@ -101,7 +133,6 @@
           listBody.innerHTML = `<tr><td colspan="2">${err.message}</td></tr>`;
         });
     }
-
     init();
   </script>
 </body>
