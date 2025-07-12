@@ -1,13 +1,15 @@
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Training Log List View</title>
+  <title>Training Log Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --primary: #3b82f6;
+      --primary-dark: #2563eb;
       --bg: #f3f4f6;
       --card-bg: #ffffff;
       --text: #1f2937;
@@ -22,65 +24,76 @@
       font-family: 'Inter', sans-serif;
       background: var(--bg);
       color: var(--text);
-      padding: var(--spacing);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      line-height: 1.6;
     }
     header {
-      width: 100%;
       background: var(--card-bg);
       box-shadow: 0 2px 4px var(--shadow);
-      position: sticky; top: 0; z-index: 10;
-      border-radius: var(--radius);
-      margin-bottom: var(--spacing);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
     .nav-container {
-      max-width: 800px;
+      max-width: 1200px;
       margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing);
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    nav a {
+      margin-left: var(--spacing);
+      text-decoration: none;
+      font-weight: 500;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    nav a:hover { color: var(--text); }
+    main {
+      max-width: 1200px;
+      margin: var(--spacing) auto;
+      padding: 0 var(--spacing);
+    }
+    /* List controls */
+    #controls {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: var(--spacing);
-    }
-    header h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-    }
-    header nav a {
-      margin-left: 16px;
-      text-decoration: none;
-      color: var(--primary);
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-    header nav a:hover { color: var(--text); }
-    #controls {
-      width: 100%; max-width: 800px;
-      display: flex; justify-content: space-between; align-items: center;
       margin-bottom: var(--spacing);
     }
     #controls label { font-weight: 500; }
-    #pageSize {
-      margin-left: 8px; padding: 4px 8px;
+    #controls select {
+      margin-left: 8px;
+      padding: 4px 8px;
       border-radius: var(--radius);
       border: 1px solid var(--border);
       background: var(--card-bg);
     }
     #pagination {
-      display: flex; align-items: center; gap: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     #pagination button {
-      background: var(--primary); color: #fff;
-      border: none; border-radius: var(--radius);
-      padding: 6px 12px; cursor: pointer;
-      transition: background .2s;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: background 0.2s;
     }
     #pagination button:disabled { background: var(--border); cursor: default; }
+    /* Log cards */
     #listContainer {
-      width: 100%; max-width: 800px;
-      display: flex; flex-direction: column; gap: var(--spacing);
-      margin-bottom: var(--spacing);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing);
     }
     .log-card {
       background: var(--card-bg);
@@ -89,7 +102,8 @@
       overflow: hidden;
     }
     .summary {
-      display: flex; justify-content: space-between;
+      display: flex;
+      justify-content: space-between;
       padding: var(--spacing);
       cursor: pointer;
     }
@@ -104,10 +118,9 @@
       margin-bottom: var(--spacing);
     }
     .session h2 {
-      font-size: 1.1rem;
-      font-weight: 500;
-      color: var(--primary);
-      margin-bottom: 8px;
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+      color: var(--text);
     }
     .table-wrapper {
       overflow-x: auto;
@@ -121,48 +134,44 @@
     .table-wrapper th,
     .table-wrapper td {
       border: 1px solid var(--border);
-      padding: 8px; text-align: center;
-      white-space: normal; word-break: break-word;
+      padding: 12px;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
     }
-    .table-wrapper th {
-      background: var(--bg); font-weight: 600;
-    }
+    .table-wrapper th { background: var(--bg); font-weight: 600; }
     .table-wrapper tr:last-child td { border-bottom: none; }
     @media (max-width: 600px) {
-      header { border-radius: 0 0 var(--radius) var(--radius); }
-      .nav-container { padding: 12px; }
-      #controls { flex-direction: column; align-items: flex-start; gap: 8px; }
       .summary { flex-direction: column; gap: 4px; }
-      .session h2 { font-size: 1rem; }
-      .table-wrapper th, .table-wrapper td { padding: 6px; font-size: 0.875rem; }
+      .session h2 { font-size: 1.1rem; }
+      .table-wrapper th, td { padding: 8px; font-size: 0.875rem; }
+      #controls { flex-direction: column; align-items: flex-start; gap: 8px; }
     }
   </style>
 </head>
 <body>
   <header>
     <div class="nav-container">
-      <h1>Training Log List View</h1>
+      <div class="logo">🏋️ PowerLog</div>
       <nav>
         <a href="index.html">カレンダー</a>
         <a href="list.html">一覧</a>
       </nav>
     </div>
   </header>
-
-  <div id="controls">
-    <label>
-      表示件数:
-      <select id="pageSize">
-        <option value="10">10</option>
-        <option value="50">50</option>
-        <option value="100">100</option>
-      </select> 件
-    </label>
-    <div id="pagination"></div>
-  </div>
-
-  <div id="listContainer"></div>
-
+  <main>
+    <div id="controls">
+      <label>表示件数:
+        <select id="pageSize">
+          <option value="10">10</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select> 件
+      </label>
+      <div id="pagination"></div>
+    </div>
+    <div id="listContainer"></div>
+  </main>
   <script>
     let logs = [];
     let currentPage = 1;
@@ -174,69 +183,51 @@
       const total = logs.length;
       const totalPages = Math.ceil(total / pageSize) || 1;
       paginationEl.innerHTML = '';
-      const prev = document.createElement('button');
-      prev.textContent = '前へ'; prev.disabled = currentPage === 1;
-      prev.addEventListener('click', () => { currentPage--; renderList(); });
-      const next = document.createElement('button');
-      next.textContent = '次へ'; next.disabled = currentPage === totalPages;
-      next.addEventListener('click', () => { currentPage++; renderList(); });
+      const prev = document.createElement('button'); prev.textContent = '前へ'; prev.disabled = currentPage===1;
+      prev.addEventListener('click', ()=>{currentPage--;renderList();});
+      const next = document.createElement('button'); next.textContent = '次へ'; next.disabled = currentPage===totalPages;
+      next.addEventListener('click', ()=>{currentPage++;renderList();});
       const info = document.createElement('span');
-      info.textContent = ` ${currentPage} / ${totalPages} ページ (` +
-                         `${total} 件中 ${(currentPage-1)*pageSize+1}-${Math.min(currentPage*pageSize,total)})`;
-      paginationEl.append(prev, info, next);
+      info.textContent = ` ${currentPage}/${totalPages} ページ (`+`${total}中 ${(currentPage-1)*pageSize+1}-${Math.min(currentPage*pageSize,total)})`;
+      paginationEl.append(prev,info,next);
     }
 
-    function toggleDetail(card) {
-      card.classList.toggle('open');
-    }
+    function toggleDetail(card){card.classList.toggle('open');}
 
-    function renderList() {
-      listContainer.innerHTML = '';
-      if (!logs.length) {
-        listContainer.innerHTML = '<p>ログがありません</p>';
-        paginationEl.innerHTML = '';
-        return;
-      }
-      const start = (currentPage - 1) * pageSize;
-      const slice = logs.slice(start, start + pageSize);
-      slice.forEach(log => {
-        const card = document.createElement('div'); card.className = 'log-card';
-        const summ = document.createElement('div'); summ.className = 'summary';
-        summ.innerHTML = `<span class="date">${log.date}</span>` +
-                         `<span class="note">${log.notes || ''}</span>`;
-        summ.addEventListener('click', () => toggleDetail(card));
-        card.appendChild(summ);
-        const det = document.createElement('div'); det.className = 'details';
-        log.sessions.forEach(sess => {
-          const sec = document.createElement('div'); sec.className = 'session';
-          sec.innerHTML = `<h2>${sess.lift}${sess.variation? ' ('+sess.variation+')':''}</h2>` +
-            `<div class="table-wrapper"><table>` +
-            `<tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>1RM</th><th>e1RM</th><th>コメント</th></tr>` +
-            sess.sets.map(s =>
-              `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td>` +
-              `<td>${s['1RM'] ?? '-'}</td><td>${s.e1RM ?? '-'}</td>` +
-              `<td>${s.comment}</td></tr>`).join('') +
+    function renderList(){
+      listContainer.innerHTML='';
+      if(!logs.length){listContainer.innerHTML='<p>ログがありません</p>'; paginationEl.innerHTML=''; return;}      
+      const start=(currentPage-1)*pageSize;
+      logs.slice(start,start+pageSize).forEach(log=>{
+        const card=document.createElement('div'); card.className='log-card';
+        const summ=document.createElement('div'); summ.className='summary';
+        summ.innerHTML=`<span class="date">${log.date}</span><span class="note">${log.notes||''}</span>`;
+        summ.addEventListener('click',()=>toggleDetail(card)); card.appendChild(summ);
+        const det=document.createElement('div'); det.className='details';
+        log.sessions.forEach(sess=>{
+          const sec=document.createElement('div'); sec.className='session';
+          sec.innerHTML=`<h2>${sess.lift}${sess.variation? ' ('+sess.variation+')':''}</h2>`+
+            `<div class="table-wrapper"><table><tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>1RM</th><th>e1RM</th><th>コメント</th></tr>`+
+            sess.sets.map(s => `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s['1RM']??'-'}</td><td>${s.e1RM??'-'}</td><td>${s.comment}</td></tr>`).join('')+
             `</table></div>`;
           det.appendChild(sec);
         });
-        card.appendChild(det);
-        listContainer.appendChild(card);
+        card.appendChild(det); listContainer.appendChild(card);
       });
       renderPagination();
     }
 
-    document.getElementById('pageSize').addEventListener('change', e => {
-      pageSize = +e.target.value; currentPage = 1; renderList();
-    });
+    document.getElementById('pageSize').addEventListener('change', e=>{pageSize=+e.target.value;currentPage=1;renderList();});
 
-    function init() {
+    function init(){
       fetch('./logs/index.json')
-        .then(r => r.ok? r.json(): Promise.reject('インデックスが見つかりません'))
-        .then(dates => Promise.all(dates.map(d => fetch(`./logs/${d}.json`).then(r => r.json()))))
-        .then(arr => { logs = arr.sort((a,b)=> a.date<b.date?1:-1); renderList(); })
-        .catch(err => { console.error(err); listContainer.innerHTML = `<p>${err}</p>`; });
+        .then(r=>r.ok? r.json(): Promise.reject('インデックスが見つかりません'))
+        .then(d=>Promise.all(d.map(dd=>fetch(`./logs/${dd}.json`).then(r=>r.json()))))
+        .then(arr=>{logs=arr.sort((a,b)=>a.date<b.date?1:-1);renderList();})
+        .catch(err=>{console.error(err);listContainer.innerHTML=`<p>${err}</p>`;});
     }
     init();
   </script>
 </body>
 </html>
+```
