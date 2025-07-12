@@ -122,10 +122,14 @@
       font-weight: 500;
     }
     .session .table-wrapper {
+      width: 100%;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: var(--spacing);
     }
     .session table {
-      width: 100%; min-width: 600px;
+      width: 100%;
+      min-width: 600px;
       border-collapse: collapse;
     }
     .session th, .session td {
@@ -198,7 +202,10 @@
 
     function toggleDetail(row, log) {
       const next = row.nextElementSibling;
-      if (next && next.classList.contains('detail-row')) { next.remove(); return; }
+      if (next && next.classList.contains('detail-row')) {
+        next.remove();
+        return;
+      }
       document.querySelectorAll('.detail-row').forEach(el => el.remove());
       const detailTr = document.createElement('tr'); detailTr.classList.add('detail-row');
       const td = document.createElement('td'); td.colSpan = 2;
