@@ -34,7 +34,7 @@
     <button id="nextMonth">▶︎</button>
   </div>
 
-  <!-- カレンダー表示 -->
+  <!-- カレンダー表示（月曜開始） -->
   <div id="calendar"></div>
 
   <main id="logContainer">
@@ -42,44 +42,40 @@
   </main>
 
   <script>
-    const availableDates = ['2025-07-12'];
+    let availableDates = [];
     const calendarEl = document.getElementById('calendar');
     const logContainer = document.getElementById('logContainer');
     const currentMonthEl = document.getElementById('currentMonth');
-    let today = new Date();
-    let viewYear = today.getFullYear();
-    let viewMonth = today.getMonth(); // 0-based
+    let viewYear, viewMonth;
 
-    // カレンダー再描画
+    // カレンダー再描画 (月曜始まり)
     function renderCalendar(year, month) {
       calendarEl.innerHTML = '';
       currentMonthEl.textContent = `${year}年 ${month + 1}月`;
-      // 曜日ヘッダー
-      const weekdays = ['日','月','火','水','木','金','土'];
+      const weekdays = ['月','火','水','木','金','土','日'];
       weekdays.forEach(w => {
         const th = document.createElement('div');
         th.textContent = w;
         th.style.fontWeight = 'bold';
         calendarEl.appendChild(th);
       });
-      // 空セル
-      const firstDay = new Date(year, month, 1).getDay();
-      for (let i = 0; i < firstDay; i++) {
+      const firstDay = new Date(year, month, 1).getDay(); // 日=0,月=1...
+      const offset = (firstDay + 6) % 7; // 月曜スタートへの調整
+      for (let i = 0; i < offset; i++) {
         const empty = document.createElement('div');
         empty.className = 'day-cell disabled';
         calendarEl.appendChild(empty);
       }
-      // 日セル
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         const cell = document.createElement('div');
         cell.className = 'day-cell';
-        cell.textContent = day;
+        cell.textContent = d;
         if (availableDates.includes(dateStr)) {
           cell.classList.add('has-log');
           cell.addEventListener('click', () => {
-            document.querySelectorAll('.day-cell.selected').forEach(el=>el.classList.remove('selected'));
+            document.querySelectorAll('.day-cell.selected').forEach(e => e.classList.remove('selected'));
             cell.classList.add('selected');
             fetchLog(dateStr);
           });
@@ -90,39 +86,48 @@
       }
     }
 
+    // ログ取得＆表示
     function fetchLog(date) {
       fetch(`logs/${date}.json`)
-        .then(res => { if(!res.ok) throw new Error('ログが見つかりません'); return res.json(); })
-        .then(renderLog)
+        .then(res => { if (!res.ok) throw new Error('ログが見つかりません'); return res.json(); })
+        .then(data => {
+          let html = `<h2>${data.date} のトレーニング記録</h2>`;
+          if (data.notes) html += `<p><em>${data.notes}</em></p>`;
+          data.sessions.forEach(session => {
+            html += `<div class="session">`;
+            html += `<h2>${session.lift}${session.variation? ' ('+session.variation+')':''}</h2>`;
+            html += `<table>`;
+            html += `<tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
+            session.sets.forEach(s => html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`);
+            html += `</table></div>`;
+          });
+          logContainer.innerHTML = html;
+        })
         .catch(err => logContainer.innerHTML = `<p>${err.message}</p>`);
     }
 
-    function renderLog(data) {
-      let html = `<h2>${data.date} のトレーニング記録</h2>`;
-      if (data.notes) html += `<p><em>${data.notes}</em></p>`;
-      data.sessions.forEach(session => {
-        html += `<div class="session">`;
-        html += `<h2>${session.lift}${session.variation? ' ('+session.variation+')':''}</h2>`;
-        html += `<table>`;
-        html += `<tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
-        session.sets.forEach(set => html += `<tr><td>${set.weight}</td><td>${set.reps}</td><td>${set.rpe}</td><td>${set.comment}</td></tr>`);
-        html += `</table></div>`;
+    // 初期化
+    function init() {
+      const today = new Date();
+      viewYear = today.getFullYear();
+      viewMonth = today.getMonth();
+      fetch('logs/index.json')
+        .then(res => { if (!res.ok) throw new Error('インデックスが見つかりません'); return res.json(); })
+        .then(dates => {
+          availableDates = dates;
+          renderCalendar(viewYear, viewMonth);
+        })
+        .catch(err => console.error(err));
+      document.getElementById('prevMonth').addEventListener('click', () => {
+        viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+        renderCalendar(viewYear, viewMonth);
       });
-      logContainer.innerHTML = html;
+      document.getElementById('nextMonth').addEventListener('click', () => {
+        viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+        renderCalendar(viewYear, viewMonth);
+      });
     }
-
-    // ナビボタン
-    document.getElementById('prevMonth').addEventListener('click', () => {
-      viewMonth--; if(viewMonth<0){ viewMonth=11; viewYear--; }
-      renderCalendar(viewYear, viewMonth);
-    });
-    document.getElementById('nextMonth').addEventListener('click', () => {
-      viewMonth++; if(viewMonth>11){ viewMonth=0; viewYear++; }
-      renderCalendar(viewYear, viewMonth);
-    });
-
-    // 初期描画
-    renderCalendar(viewYear, viewMonth);
+    init();
   </script>
 </body>
 </html>
