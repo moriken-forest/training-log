@@ -3,252 +3,240 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Training Log Viewer</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <title>Training Log Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #f9fafb;
-      --card-bg: #ffffff;
       --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
       --text: #1f2937;
       --muted: #6b7280;
-      --border: #e5e7eb;
-      --shadow: rgba(0, 0, 0, 0.05);
+      --shadow: rgba(0,0,0,0.1);
+      --radius: 8px;
+      --spacing: 16px;
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      margin: 0;
       font-family: 'Inter', sans-serif;
       background: var(--bg);
       color: var(--text);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
+      line-height: 1.6;
     }
     header {
-      text-align: center;
-      margin-bottom: 30px;
+      background: var(--card-bg);
+      box-shadow: 0 2px 4px var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    header h1 {
-      font-size: 2rem;
-      font-weight: 600;
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing);
     }
-    header nav {
-      margin-top: 10px;
-    }
-    header nav a {
-      margin: 0 8px;
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
       color: var(--primary);
-      text-decoration: none;
-      font-weight: 600;
     }
+    nav a {
+      margin-left: var(--spacing);
+      text-decoration: none;
+      font-weight: 500;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    nav a:hover { color: var(--text); }
+    main {
+      max-width: 1200px;
+      margin: var(--spacing) auto;
+      padding: 0 var(--spacing);
+    }
+    #hero {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      padding: calc(var(--spacing) * 2);
+      border-radius: var(--radius);
+      text-align: center;
+      margin-bottom: var(--spacing);
+    }
+    #hero h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    #hero p { font-size: 1rem; opacity: 0.9; }
     #calendarHeader {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      width: 100%;
-      max-width: 640px;
-      margin-bottom: 15px;
+      margin-bottom: var(--spacing);
     }
     #calendarHeader button {
       background: var(--primary);
       color: #fff;
       border: none;
+      border-radius: var(--radius);
       padding: 8px 12px;
-      border-radius: 6px;
       cursor: pointer;
-      box-shadow: 0 2px 4px var(--shadow);
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.1s;
     }
-    #calendarHeader button:hover {
-      background: #2563eb;
-    }
+    #calendarHeader button:hover { background: var(--primary-dark); }
+    #calendarHeader button:active { transform: translateY(1px); }
     #calendarHeader h2 {
       font-size: 1.25rem;
-      color: var(--muted);
+      color: var(--text);
+      font-weight: 600;
     }
     #calendar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 8px;
-      max-width: 640px;
-      width: 100%;
-      margin-bottom: 30px;
+      margin-bottom: var(--spacing);
     }
     .day-cell {
       background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border, #e5e7eb);
+      padding: 10px;
       text-align: center;
       cursor: pointer;
-      box-shadow: 0 1px 2px var(--shadow);
-      transition: transform 0.1s;
+      box-shadow: 0 1px 3px var(--shadow);
+      transition: transform 0.1s, box-shadow 0.2s;
     }
     .day-cell.disabled {
-      color: var(--border);
-      cursor: default;
+      color: var(--border, #e5e7eb);
       background: var(--bg);
+      cursor: default;
       box-shadow: none;
     }
-    .day-cell.has-log {
-      border-color: var(--primary);
-    }
-    .day-cell:hover:not(.disabled) {
-      transform: translateY(-2px);
-    }
+    .day-cell.has-log { border-color: var(--primary); }
+    .day-cell:hover:not(.disabled) { transform: translateY(-2px); box-shadow: 0 4px 6px var(--shadow); }
     .day-cell.selected {
       background: var(--primary);
       color: #fff;
       font-weight: 600;
+      border-color: var(--primary-dark);
     }
-    main#logContainer {
-      width: 100%;
-      max-width: 640px;
+    #logContainer {
       background: var(--card-bg);
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px var(--shadow);
+      border-radius: var(--radius);
+      padding: var(--spacing);
+      box-shadow: 0 2px 6px var(--shadow);
     }
-    main#logContainer h2 {
-      margin-top: 0;
+    #logContainer h2 {
       font-size: 1.5rem;
       color: var(--primary);
+      margin-bottom: 0.5rem;
     }
     .meta {
-      font-weight: 600;
+      font-weight: 500;
       color: var(--muted);
-      margin-bottom: 16px;
+      margin-bottom: var(--spacing);
     }
     .session {
-      margin-bottom: 24px;
+      margin-bottom: calc(var(--spacing) * 2);
     }
     .session h2 {
-      margin-bottom: 8px;
-      font-size: 1.2rem;
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
       color: var(--text);
     }
     .session table {
       width: 100%;
       border-collapse: collapse;
-      border-radius: 6px;
       overflow: hidden;
+      border-radius: var(--radius);
     }
     .session th,
     .session td {
-      border-bottom: 1px solid var(--border);
-      padding: 10px;
-      text-align: center;
+      border-bottom: 1px solid var(--border, #e5e7eb);
+      padding: 12px;
     }
     .session th {
       background: var(--bg);
       font-weight: 600;
     }
-    .session tr:last-child td {
-      border-bottom: none;
-    }
+    .session tr:last-child td { border-bottom: none; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Training Log Viewer</h1>
-    <nav>
-      <a href="index.html">カレンダー</a> |
-      <a href="list.html">一覧</a>
-    </nav>
+    <div class="nav-container">
+      <div class="logo">🏋️ PowerLog</div>
+      <nav>
+        <a href="index.html">カレンダー</a>
+        <a href="list.html">一覧</a>
+      </nav>
+    </div>
   </header>
-
-  <div id="calendarHeader">
-    <button id="prevMonth">◀︎</button>
-    <h2 id="currentMonth"></h2>
-    <button id="nextMonth">▶︎</button>
-  </div>
-
-  <div id="calendar"></div>
-
-  <main id="logContainer">
-    <p>カレンダーの日付をクリックしてください。</p>
+  <main>
+    <section id="hero">
+      <h1>トレーニングダッシュボード</h1>
+      <p>あなたの練習記録を美しく、直感的に閲覧できます</p>
+    </section>
+    <section id="calendar-section">
+      <div id="calendarHeader">
+        <button id="prevMonth">◀︎</button>
+        <h2 id="currentMonth"></h2>
+        <button id="nextMonth">▶︎</button>
+      </div>
+      <div id="calendar"></div>
+    </section>
+    <section id="logContainer">
+      <p>カレンダーの日付をクリックして、詳細を表示してください。</p>
+    </section>
   </main>
-
   <script>
     let availableDates = [];
     const calendarEl = document.getElementById('calendar');
     const logContainer = document.getElementById('logContainer');
     const currentMonthEl = document.getElementById('currentMonth');
     let viewYear, viewMonth;
-
     function renderCalendar(year, month) {
       calendarEl.innerHTML = '';
       currentMonthEl.textContent = `${year}年 ${month + 1}月`;
       ['日','月','火','水','木','金','土'].forEach(w => {
-        const th = document.createElement('div');
-        th.textContent = w;
-        th.style.fontWeight = '600';
-        th.style.color = 'var(--muted)';
-        calendarEl.appendChild(th);
+        const th = document.createElement('div'); th.textContent = w; th.style.fontWeight = '600'; th.style.color = 'var(--muted)'; calendarEl.appendChild(th);
       });
       const firstDay = new Date(year, month, 1).getDay();
       for (let i = 0; i < firstDay; i++) {
-        const empty = document.createElement('div');
-        empty.className = 'day-cell disabled';
-        calendarEl.appendChild(empty);
+        const empty = document.createElement('div'); empty.className = 'day-cell disabled'; calendarEl.appendChild(empty);
       }
       const days = new Date(year, month+1, 0).getDate();
       for (let d = 1; d <= days; d++) {
         const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const cell = document.createElement('div');
-        cell.className = 'day-cell';
-        cell.textContent = d;
+        const cell = document.createElement('div'); cell.className = 'day-cell'; cell.textContent = d;
         if (availableDates.includes(dateStr)) {
           cell.classList.add('has-log');
-          cell.addEventListener('click', () => {
-            document.querySelectorAll('.day-cell.selected').forEach(e => e.classList.remove('selected'));
-            cell.classList.add('selected');
-            fetchLog(dateStr);
-          });
-        } else {
-          cell.classList.add('disabled');
-        }
+          cell.addEventListener('click', () => { document.querySelectorAll('.day-cell.selected').forEach(e => e.classList.remove('selected')); cell.classList.add('selected'); fetchLog(dateStr); });
+        } else cell.classList.add('disabled');
         calendarEl.appendChild(cell);
       }
     }
-
     function fetchLog(date) {
       fetch(`./logs/${date}.json`)
         .then(res => { if (!res.ok) throw new Error('ログが見つかりません'); return res.json(); })
         .then(renderLog)
         .catch(err => { logContainer.innerHTML = `<p>${err.message}</p>`; });
     }
-
     function renderLog(data) {
       let html = `<h2>${data.date} のトレーニング記録</h2>`;
       html += `<p class="meta">ブロック: ${data.block ?? '-'} ｜ Week: ${data.week ?? '-'} ｜ Day: ${data.day ?? '-'}</p>`;
       if (data.notes) html += `<p><em>${data.notes}</em></p>`;
       data.sessions.forEach(session => {
-        html += `<div class="session"><h2>${session.lift}${session.variation ? ' ('+session.variation+')':''}</h2><table><tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
-        session.sets.forEach(s => { html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`; });
+        html += `<div class="session"><h2>${session.lift}${session.variation? ' ('+session.variation+')':''}</h2><table><tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
+        session.sets.forEach(s => html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`);
         html += `</table></div>`;
       });
       logContainer.innerHTML = html;
     }
-
     function init() {
-      const today = new Date();
-      viewYear = today.getFullYear();
-      viewMonth = today.getMonth();
-      fetch('./logs/index.json')
-        .then(r => r.ok ? r.json() : Promise.reject('インデックスが見つかりません'))
-        .then(dates => { availableDates = dates; renderCalendar(viewYear, viewMonth); })
-        .catch(console.error);
-      document.getElementById('prevMonth').addEventListener('click', () => {
-        viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
-        renderCalendar(viewYear, viewMonth);
-      });
-      document.getElementById('nextMonth').addEventListener('click', () => {
-        viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
-        renderCalendar(viewYear, viewMonth);
-      });
+      const today = new Date(); viewYear = today.getFullYear(); viewMonth = today.getMonth();
+      fetch('./logs/index.json').then(r => r.ok? r.json(): Promise.reject('インデックスが見つかりません')).then(dates => { availableDates = dates; renderCalendar(viewYear, viewMonth); }).catch(console.error);
+      document.getElementById('prevMonth').addEventListener('click', () => { viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; } renderCalendar(viewYear, viewMonth); });
+      document.getElementById('nextMonth').addEventListener('click', () => { viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; } renderCalendar(viewYear, viewMonth); });
     }
     init();
   </script>
