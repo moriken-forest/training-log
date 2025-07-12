@@ -1,8 +1,8 @@
 {
   "date": "2025-08-12",
-  "block": null,
-  "week": null,
-  "day": null,
+  "block": "Acc",
+  "week": 1,
+  "day": 2,
   "notes": "ブロック1開始前の慣らし練習",
   "sessions": [
     {
