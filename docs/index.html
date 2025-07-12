@@ -22,6 +22,7 @@
     table { width: 100%; border-collapse: collapse; margin-top: 5px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
     th { background-color: #f4f4f4; }
+    .meta { font-weight: bold; margin: 5px 0; }
   </style>
 </head>
 <body>
@@ -33,7 +34,7 @@
     </nav>
   </header>
 
-  <!-- カレンダー ヘッダー（ナビゲーション） -->
+  <!-- カレンダー ナビ -->
   <div id="calendarHeader">
     <button id="prevMonth">◀︎</button>
     <h2 id="currentMonth"></h2>
@@ -54,11 +55,9 @@
     const currentMonthEl = document.getElementById('currentMonth');
     let viewYear, viewMonth;
 
-    // カレンダー再描画 (日曜始まり)
     function renderCalendar(year, month) {
       calendarEl.innerHTML = '';
       currentMonthEl.textContent = `${year}年 ${month + 1}月`;
-      // 曜日ヘッダー
       const weekdays = ['日','月','火','水','木','金','土'];
       weekdays.forEach(w => {
         const th = document.createElement('div');
@@ -66,14 +65,12 @@
         th.style.fontWeight = 'bold';
         calendarEl.appendChild(th);
       });
-      // 空セル
       const firstDay = new Date(year, month, 1).getDay();
       for (let i = 0; i < firstDay; i++) {
         const empty = document.createElement('div');
         empty.className = 'day-cell disabled';
         calendarEl.appendChild(empty);
       }
-      // 日セル
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       for (let d = 1; d <= daysInMonth; d++) {
         const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -94,47 +91,40 @@
       }
     }
 
-    // ログ取得＆表示
     function fetchLog(date) {
       fetch(`./logs/${date}.json`)
-        .then(res => {
-          if (!res.ok) throw new Error('ログが見つかりません');
-          return res.json();
-        })
-        .then(data => {
-          let html = `<h2>${data.date} のトレーニング記録</h2>`;
-          if (data.notes) html += `<p><em>${data.notes}</em></p>`;
-          data.sessions.forEach(session => {
-            html += `<div class="session">`;
-            html += `<h2>${session.lift}${session.variation ? ' ('+session.variation+')':''}</h2>`;
-            html += `<table>`;
-            html += `<tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
-            session.sets.forEach(s => {
-              html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`;
-            });
-            html += `</table></div>`;
-          });
-          logContainer.innerHTML = html;
-        })
-        .catch(err => {
-          logContainer.innerHTML = `<p>${err.message}</p>`;
-        });
+        .then(res => { if (!res.ok) throw new Error('ログが見つかりません'); return res.json(); })
+        .then(data => renderLog(data))
+        .catch(err => logContainer.innerHTML = `<p>${err.message}</p>`);
     }
 
-    // 初期化
+    function renderLog(data) {
+      let html = `<h2>${data.date} のトレーニング記録</h2>`;
+      // ブロック・週・日表示
+      if (data.block || data.week || data.day) {
+        html += `<p class="meta">ブロック: ${data.block || '-'} ｜ Week-Day: ${data.week || '-'} - ${data.day || '-'}</p>`;
+      }
+      if (data.notes) html += `<p><em>${data.notes}</em></p>`;
+      data.sessions.forEach(session => {
+        html += `<div class="session">`;
+        html += `<h2>${session.lift}${session.variation ? ' ('+session.variation+')':''}</h2>`;
+        html += `<table>`;
+        html += `<tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
+        session.sets.forEach(s => {
+          html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`;
+        });
+        html += `</table></div>`;
+      });
+      logContainer.innerHTML = html;
+    }
+
     function init() {
       const today = new Date();
       viewYear = today.getFullYear();
       viewMonth = today.getMonth();
       fetch('./logs/index.json')
-        .then(res => {
-          if (!res.ok) throw new Error('インデックスが見つかりません');
-          return res.json();
-        })
-        .then(dates => {
-          availableDates = dates;
-          renderCalendar(viewYear, viewMonth);
-        })
+        .then(res => { if (!res.ok) throw new Error('インデックスが見つかりません'); return res.json(); })
+        .then(dates => { availableDates = dates; renderCalendar(viewYear, viewMonth); })
         .catch(err => console.error(err));
       document.getElementById('prevMonth').addEventListener('click', () => {
         viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
