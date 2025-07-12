@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Training Log List View</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+    h1 { text-align: center; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f4f4f4; }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover { background-color: #f0f8ff; }
+    .detail { display: none; padding: 10px; border: 1px solid #ccc; margin-bottom: 20px; }
+    .session { margin-bottom: 15px; }
+    .session h2 { margin-bottom: 5px; font-size: 1.1em; }
+    .session table { width: 100%; border-collapse: collapse; }
+    .session th, .session td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+    .session th { background-color: #eaeaea; }
+  </style>
+</head>
+<body>
+  <h1>Training Log List View</h1>
+  <table id="logList">
+    <thead>
+      <tr><th>日付</th><th>ノート</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div id="detailContainer"></div>
+
+  <script>
+    let logs = [];
+    const listBody = document.querySelector('#logList tbody');
+    const detailContainer = document.getElementById('detailContainer');
+
+    function renderList() {
+      listBody.innerHTML = '';
+      logs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.classList.add('clickable');
+        tr.innerHTML = `<td>${log.date}</td><td>${log.notes || ''}</td>`;
+        tr.addEventListener('click', () => showDetail(log));
+        listBody.appendChild(tr);
+      });
+    }
+
+    function showDetail(log) {
+      detailContainer.innerHTML = '';
+      log.sessions.forEach(session => {
+        const div = document.createElement('div');
+        div.classList.add('detail');
+        let html = `<div class="session"><h2>${session.lift}${session.variation? ' ('+session.variation+')':''}</h2>`;
+        html += '<table><tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>';
+        session.sets.forEach(s => {
+          html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`;
+        });
+        html += '</table></div>';
+        div.innerHTML = html;
+        detailContainer.appendChild(div);
+        div.style.display = 'block';
+      });
+      // Scroll into view
+      detailContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 初期化
+    fetch('logs/index.json')
+      .then(res => res.json())
+      .then(dates => {
+        const promises = dates.map(d => fetch(`logs/${d}.json`).then(r=>r.json()));
+        return Promise.all(promises);
+      })
+      .then(data => {
+        logs = data.sort((a,b) => a.date < b.date ? 1 : -1);
+        renderList();
+      })
+      .catch(err => console.error(err));
+  </script>
+</body>
+</html>
