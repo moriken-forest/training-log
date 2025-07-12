@@ -57,72 +57,16 @@
       margin: var(--spacing) auto;
       padding: 0 var(--spacing);
     }
-    /* Hero */
-    #hero {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: #fff;
-      padding: calc(var(--spacing) * 2);
-      border-radius: var(--radius);
-      text-align: center;
-      margin-bottom: var(--spacing);
-      position: relative;
-    }
-    #hero h1 {
-      font-size: 2.25rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-    #hero p {
-      font-size: 1rem;
-      opacity: 0.9;
-      margin-bottom: var(--spacing);
-    }
-    #hero .cta {
-      display: inline-block;
-      background: #fff;
-      color: var(--primary);
-      padding: .75rem 1.5rem;
-      border-radius: var(--radius);
-      font-weight: 600;
-      box-shadow: 0 2px 4px var(--shadow);
-      transition: transform .1s, background .2s;
-      text-decoration: none;
-    }
-    #hero .cta:hover {
-      background: #f3f4f6;
-      transform: translateY(-2px);
-    }
-    /* Metrics cards */
-    #metrics {
-      display: flex;
-      justify-content: center;
-      gap: var(--spacing);
-      margin-top: var(--spacing);
-    }
-    .metric-card {
-      background: var(--card-bg);
-      padding: var(--spacing);
-      border-radius: var(--radius);
-      box-shadow: 0 1px 3px var(--shadow);
-      text-align: center;
-      width: 150px;
-    }
-    .metric-card h3 {
-      font-size: 1rem;
-      color: var(--muted);
-      margin-bottom: .5rem;
-    }
-    .metric-card p {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--text);
-    }
     /* Calendar navigation */
     #calendarHeader {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: var(--spacing);
+      background: var(--card-bg);
+      padding: var(--spacing);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 3px var(--shadow);
     }
     #calendarHeader button {
       background: var(--primary);
@@ -131,7 +75,7 @@
       border-radius: var(--radius);
       padding: 8px 12px;
       cursor: pointer;
-      transition: background .2s, transform .1s;
+      transition: background 0.2s, transform 0.1s;
     }
     #calendarHeader button:hover { background: var(--primary-dark); }
     #calendarHeader button:active { transform: translateY(1px); }
@@ -150,15 +94,15 @@
     .day-cell {
       background: var(--card-bg);
       border-radius: var(--radius);
-      border: 1px solid var(--border, #e5e7eb);
-      padding: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 12px;
       text-align: center;
       cursor: pointer;
       box-shadow: 0 1px 3px var(--shadow);
-      transition: transform .1s, box-shadow .2s;
+      transition: transform 0.1s, box-shadow 0.2s;
     }
     .day-cell.disabled {
-      color: var(--border, #e5e7eb);
+      color: #e5e7eb;
       background: var(--bg);
       cursor: default;
       box-shadow: none;
@@ -181,7 +125,7 @@
     #logContainer h2 {
       font-size: 1.5rem;
       color: var(--primary);
-      margin-bottom: .5rem;
+      margin-bottom: 0.5rem;
     }
     .meta {
       font-weight: 500;
@@ -193,19 +137,20 @@
     }
     .session h2 {
       font-size: 1.25rem;
-      margin-bottom: .5rem;
+      margin-bottom: 0.5rem;
       color: var(--text);
     }
     .session table {
       width: 100%;
       border-collapse: collapse;
-      overflow: hidden;
       border-radius: var(--radius);
+      overflow: hidden;
     }
     .session th,
     .session td {
-      border-bottom: 1px solid var(--border, #e5e7eb);
+      border-bottom: 1px solid #e5e7eb;
       padding: 12px;
+      text-align: center;
     }
     .session th {
       background: var(--bg);
@@ -225,25 +170,6 @@
     </div>
   </header>
   <main>
-    <section id="hero">
-      <h1>トレーニングダッシュボード</h1>
-      <p>あなたの練習記録を美しく、直感的に閲覧できます</p>
-      <a href="#calendar-section" class="cta">今すぐ開始</a>
-      <div id="metrics">
-        <div class="metric-card">
-          <h3>今月のセッション</h3>
-          <p>12</p>
-        </div>
-        <div class="metric-card">
-          <h3>累計ボリューム</h3>
-          <p>7,560kg</p>
-        </div>
-        <div class="metric-card">
-          <h3>最高1RM</h3>
-          <p>162.5kg</p>
-        </div>
-      </div>
-    </section>
     <section id="calendar-section">
       <div id="calendarHeader">
         <button id="prevMonth">◀︎</button>
@@ -279,7 +205,9 @@
         if (availableDates.includes(dateStr)) {
           cell.classList.add('has-log');
           cell.addEventListener('click', () => { document.querySelectorAll('.day-cell.selected').forEach(e => e.classList.remove('selected')); cell.classList.add('selected'); fetchLog(dateStr); });
-        } else cell.classList.add('disabled');
+        } else {
+          cell.classList.add('disabled');
+        }
         calendarEl.appendChild(cell);
       }
     }
@@ -300,7 +228,7 @@
     function init() {
       const today = new Date(); viewYear = today.getFullYear(); viewMonth = today.getMonth();
       fetch('./logs/index.json').then(r => r.ok? r.json(): Promise.reject('インデックスが見つかりません')).then(dates => { availableDates = dates; renderCalendar(viewYear, viewMonth); }).catch(console.error);
-      document.getElementById('prevMonth').addEventListener('click', () => { viewMonth--; if (viewMonth<0){viewMonth=11;viewYear--;} renderCalendar(viewYear, viewMonth); });
+      document.getElementById('prevMonth').addEventListener('click', () => { viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;} renderCalendar(viewYear, viewMonth); });
       document.getElementById('nextMonth').addEventListener('click', () => { viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;} renderCalendar(viewYear, viewMonth); });
     }
     init();
