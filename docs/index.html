@@ -75,7 +75,7 @@
       border-radius: var(--radius);
       padding: 8px 12px;
       cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
+      transition: background .2s, transform .1s;
     }
     #calendarHeader button:hover { background: var(--primary-dark); }
     #calendarHeader button:active { transform: translateY(1px); }
@@ -99,7 +99,7 @@
       text-align: center;
       cursor: pointer;
       box-shadow: 0 1px 3px var(--shadow);
-      transition: transform 0.1s, box-shadow 0.2s;
+      transition: transform .1s, box-shadow .2s;
     }
     .day-cell.disabled {
       color: #e5e7eb;
@@ -125,7 +125,7 @@
     #logContainer h2 {
       font-size: 1.5rem;
       color: var(--primary);
-      margin-bottom: 0.5rem;
+      margin-bottom: .5rem;
     }
     .meta {
       font-weight: 500;
@@ -137,7 +137,7 @@
     }
     .session h2 {
       font-size: 1.25rem;
-      margin-bottom: 0.5rem;
+      margin-bottom: .5rem;
       color: var(--text);
     }
     .session table {
@@ -219,8 +219,8 @@
       html += `<p class="meta">ブロック: ${data.block ?? '-'} ｜ Week: ${data.week ?? '-'} ｜ Day: ${data.day ?? '-'}</p>`;
       if (data.notes) html += `<p><em>${data.notes}</em></p>`;
       data.sessions.forEach(session => {
-        html += `<div class="session"><h2>${session.lift}${session.variation? ' ('+session.variation+')':''}</h2><table><tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
-        session.sets.forEach(s => html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`);
+        html += `<div class="session"><h2>${session.lift}${session.variation? ' ('+session.variation+')':''}</h2><table><tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>1RM</th><th>e1RM</th><th>コメント</th></tr>`;
+        session.sets.forEach(s => html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s['1RM'] ?? '-'}</td><td>${s.e1RM ?? '-'}</td><td>${s.comment}</td></tr>`);
         html += `</table></div>`;
       });
       logContainer.innerHTML = html;
