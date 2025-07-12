@@ -34,7 +34,7 @@
     <button id="nextMonth">▶︎</button>
   </div>
 
-  <!-- カレンダー表示（月曜開始） -->
+  <!-- カレンダー表示（日曜開始） -->
   <div id="calendar"></div>
 
   <main id="logContainer">
@@ -48,24 +48,26 @@
     const currentMonthEl = document.getElementById('currentMonth');
     let viewYear, viewMonth;
 
-    // カレンダー再描画 (月曜始まり)
+    // カレンダー再描画 (日曜始まり)
     function renderCalendar(year, month) {
       calendarEl.innerHTML = '';
       currentMonthEl.textContent = `${year}年 ${month + 1}月`;
-      const weekdays = ['月','火','水','木','金','土','日'];
+      // 曜日ヘッダー
+      const weekdays = ['日','月','火','水','木','金','土'];
       weekdays.forEach(w => {
         const th = document.createElement('div');
         th.textContent = w;
         th.style.fontWeight = 'bold';
         calendarEl.appendChild(th);
       });
+      // 空セル
       const firstDay = new Date(year, month, 1).getDay(); // 日=0,月=1...
-      const offset = (firstDay + 6) % 7; // 月曜スタートへの調整
-      for (let i = 0; i < offset; i++) {
+      for (let i = 0; i < firstDay; i++) {
         const empty = document.createElement('div');
         empty.className = 'day-cell disabled';
         calendarEl.appendChild(empty);
       }
+      // 日セル
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       for (let d = 1; d <= daysInMonth; d++) {
         const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
