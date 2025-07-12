@@ -6,7 +6,9 @@
   <title>Training Log List View</title>
   <style>
     body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    h1 { text-align: center; margin-bottom: 20px; }
+    header { text-align: center; margin-bottom: 20px; }
+    header nav { margin-top: 10px; }
+    header nav a { margin: 0 10px; text-decoration: none; color: #007acc; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
     th { background-color: #f4f4f4; }
@@ -21,7 +23,14 @@
   </style>
 </head>
 <body>
-  <h1>Training Log List View</h1>
+  <header>
+    <h1>Training Log List View</h1>
+    <nav>
+      <a href="index.html">カレンダー表示</a> |
+      <a href="list.html">一覧表示</a>
+    </nav>
+  </header>
+
   <table id="logList">
     <thead>
       <tr><th>日付</th><th>ノート</th></tr>
@@ -38,6 +47,10 @@
 
     function renderList() {
       listBody.innerHTML = '';
+      if (logs.length === 0) {
+        listBody.innerHTML = '<tr><td colspan="2">ログがありません</td></tr>';
+        return;
+      }
       logs.forEach(log => {
         const tr = document.createElement('tr');
         tr.classList.add('clickable');
@@ -52,7 +65,7 @@
       log.sessions.forEach(session => {
         const div = document.createElement('div');
         div.classList.add('detail');
-        let html = `<div class="session"><h2>${session.lift}${session.variation? ' ('+session.variation+')':''}</h2>`;
+        let html = `<div class="session"><h2>${session.lift}${session.variation ? ' ('+session.variation+')':''}</h2>`;
         html += '<table><tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>';
         session.sets.forEach(s => {
           html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`;
@@ -62,22 +75,27 @@
         detailContainer.appendChild(div);
         div.style.display = 'block';
       });
-      // Scroll into view
       detailContainer.scrollIntoView({ behavior: 'smooth' });
     }
 
-    // 初期化
-    fetch('logs/index.json')
-      .then(res => res.json())
-      .then(dates => {
-        const promises = dates.map(d => fetch(`logs/${d}.json`).then(r=>r.json()));
-        return Promise.all(promises);
-      })
-      .then(data => {
-        logs = data.sort((a,b) => a.date < b.date ? 1 : -1);
-        renderList();
-      })
-      .catch(err => console.error(err));
+    function init() {
+      fetch('logs/index.json')
+        .then(res => {
+          if (!res.ok) throw new Error('インデックスが見つかりません');
+          return res.json();
+        })
+        .then(dates => Promise.all(dates.map(d => fetch(`logs/${d}.json`).then(r => r.json()))))
+        .then(data => {
+          logs = data.sort((a, b) => a.date < b.date ? 1 : -1);
+          renderList();
+        })
+        .catch(err => {
+          console.error(err);
+          listBody.innerHTML = `<tr><td colspan="2">${err.message}</td></tr>`;
+        });
+    }
+
+    init();
   </script>
 </body>
 </html>
