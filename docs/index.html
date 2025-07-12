@@ -7,6 +7,8 @@
   <style>
     body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
     header { text-align: center; margin-bottom: 20px; }
+    header nav { margin-top: 10px; }
+    header nav a { margin: 0 10px; text-decoration: none; color: #007acc; }
     #calendarHeader { display: flex; justify-content: space-between; align-items: center; max-width: 600px; margin: 0 auto; }
     #calendarHeader button { padding: 5px 10px; font-size: 1em; }
     #calendarHeader h2 { margin: 0; font-size: 1.2em; }
@@ -25,6 +27,10 @@
 <body>
   <header>
     <h1>Training Log Viewer</h1>
+    <nav>
+      <a href="index.html">カレンダー表示</a> |
+      <a href="list.html">一覧表示</a>
+    </nav>
   </header>
 
   <!-- カレンダー ヘッダー（ナビゲーション） -->
@@ -77,7 +83,8 @@
         if (availableDates.includes(dateStr)) {
           cell.classList.add('has-log');
           cell.addEventListener('click', () => {
-            document.querySelectorAll('.day-cell.selected').forEach(e => e.classList.remove('selected'));
+            document.querySelectorAll('.day-cell.selected')
+                    .forEach(e => e.classList.remove('selected'));
             cell.classList.add('selected');
             fetchLog(dateStr);
           });
@@ -91,21 +98,29 @@
     // ログ取得＆表示
     function fetchLog(date) {
       fetch(`logs/${date}.json`)
-        .then(res => { if (!res.ok) throw new Error('ログが見つかりません'); return res.json(); })
+        .then(res => {
+          if (!res.ok) throw new Error('ログが見つかりません');
+          return res.json();
+        })
         .then(data => {
           let html = `<h2>${data.date} のトレーニング記録</h2>`;
           if (data.notes) html += `<p><em>${data.notes}</em></p>`;
           data.sessions.forEach(session => {
             html += `<div class="session">`;
-            html += `<h2>${session.lift}${session.variation? ' ('+session.variation+')':''}</h2>`;
+            html += `<h2>${session.lift}${session.variation ? ' (' + session.variation + ')' : ''}</h2>`;
             html += `<table>`;
             html += `<tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
-            session.sets.forEach(s => html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`);
+            session.sets.forEach(s => {
+              html += `<tr><td>${s.weight}</td><td>${s.reps}</td>`
+                    + `<td>${s.rpe}</td><td>${s.comment}</td></tr>`;
+            });
             html += `</table></div>`;
           });
           logContainer.innerHTML = html;
         })
-        .catch(err => logContainer.innerHTML = `<p>${err.message}</p>`);
+        .catch(err => {
+          logContainer.innerHTML = `<p>${err.message}</p>`;
+        });
     }
 
     // 初期化
@@ -114,18 +129,25 @@
       viewYear = today.getFullYear();
       viewMonth = today.getMonth();
       fetch('logs/index.json')
-        .then(res => { if (!res.ok) throw new Error('インデックスが見つかりません'); return res.json(); })
+        .then(res => {
+          if (!res.ok) throw new Error('インデックスが見つかりません');
+          return res.json();
+        })
         .then(dates => {
           availableDates = dates;
           renderCalendar(viewYear, viewMonth);
         })
         .catch(err => console.error(err));
-      document.getElementById('prevMonth').addEventListener('click', () => {
-        viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+      document.getElementById('prevMonth')
+              .addEventListener('click', () => {
+        viewMonth--;
+        if (viewMonth < 0) { viewMonth = 11; viewYear--; }
         renderCalendar(viewYear, viewMonth);
       });
-      document.getElementById('nextMonth').addEventListener('click', () => {
-        viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+      document.getElementById('nextMonth')
+              .addEventListener('click', () => {
+        viewMonth++;
+        if (viewMonth > 11) { viewMonth = 0; viewYear++; }
         renderCalendar(viewYear, viewMonth);
       });
     }
