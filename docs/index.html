@@ -38,7 +38,8 @@
     });
 
     function fetchLog(date) {
-      const url = `../logs/${date}.json`;
+      // docs/logs フォルダに置いた JSON を参照
+      const url = `logs/${date}.json`;
       fetch(url)
         .then(res => {
           if (!res.ok) throw new Error('ログが見つかりません');
