@@ -72,7 +72,7 @@
 
     // ログフェッチ＆表示
     function fetchLog(date) {
-      fetch(`docs/logs/${date}.json`)
+      fetch(`logs/${date}.json`)
         .then(res => { if (!res.ok) throw new Error('ログが見つかりません'); return res.json(); })
         .then(renderLog)
         .catch(err => { document.getElementById('logContainer').innerHTML = `<p>${err.message}</p>`; });
