@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Training Log Viewer</title>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet" />
   <style>
     body { font-family: sans-serif; padding: 20px; }
     header { text-align: center; margin-bottom: 20px; }
-    #datePicker { padding: 5px; font-size: 16px; }
+    #calendar { max-width: 600px; margin: 0 auto 20px; }
     .session { margin-bottom: 20px; }
     .session h2 { margin-bottom: 5px; font-size: 1.2em; }
     table { width: 100%; border-collapse: collapse; margin-top: 5px; }
@@ -18,62 +19,75 @@
 <body>
   <header>
     <h1>Training Log Viewer</h1>
-    <input type="date" id="datePicker" />
   </header>
+  <div id="calendar"></div>
   <main id="logContainer">
-    <p>日付を選択してください。</p>
+    <p>カレンダーで日付を選択してください。</p>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.js"></script>
   <script>
-    const datePicker = document.getElementById('datePicker');
-    const logContainer = document.getElementById('logContainer');
+    // ログがある日付のリスト (手動更新 or 自動生成)
+    const availableDates = [
+      '2025-07-12'
+      // 他の日付も追加していく
+    ];
 
-    // 初期値を今日の日付に設定
-    const today = new Date().toISOString().split('T')[0];
-    datePicker.value = today;
+    document.addEventListener('DOMContentLoaded', function() {
+      const calendarEl = document.getElementById('calendar');
+      const logContainer = document.getElementById('logContainer');
 
-    datePicker.addEventListener('change', () => {
-      const selectedDate = datePicker.value;
-      fetchLog(selectedDate);
-    });
-
-    function fetchLog(date) {
-      // docs/logs フォルダに置いた JSON を参照
-      const url = `logs/${date}.json`;
-      fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error('ログが見つかりません');
-          return res.json();
-        })
-        .then(data => renderLog(data))
-        .catch(err => {
-          logContainer.innerHTML = `<p>${err.message}</p>`;
-        });
-    }
-
-    function renderLog(data) {
-      let html = `<h2>${data.date} のトレーニング記録</h2>`;
-      if (data.notes) html += `<p><em>${data.notes}</em></p>`;
-
-      data.sessions.forEach(session => {
-        html += `<div class="session">`;
-        html += `<h2>${session.lift}${session.variation ? ' (' + session.variation + ')' : ''}</h2>`;
-        html += `<table>`;
-        html += `  <tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
-        session.sets.forEach(set => {
-          html += `  <tr>`;
-          html += `<td>${set.weight}</td><td>${set.reps}</td><td>${set.rpe}</td><td>${set.comment}</td>`;
-          html += `  </tr>`;
-        });
-        html += `</table>`;
-        html += `</div>`;
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ja',
+        dayMaxEvents: true,
+        selectable: true,
+        events: availableDates.map(d => ({ title: 'Log', start: d })),
+        dateClick: function(info) {
+          if (availableDates.includes(info.dateStr)) {
+            fetchLog(info.dateStr);
+          } else {
+            logContainer.innerHTML = `<p>${info.dateStr} のログがありません</p>`;
+          }
+        }
       });
 
-      logContainer.innerHTML = html;
-    }
+      calendar.render();
 
-    // 初期表示
-    fetchLog(today);
+      function fetchLog(date) {
+        const url = `logs/${date}.json`;
+        fetch(url)
+          .then(res => {
+            if (!res.ok) throw new Error('ログが見つかりません');
+            return res.json();
+          })
+          .then(data => renderLog(data))
+          .catch(err => {
+            logContainer.innerHTML = `<p>${err.message}</p>`;
+          });
+      }
+
+      function renderLog(data) {
+        let html = `<h2>${data.date} のトレーニング記録</h2>`;
+        if (data.notes) html += `<p><em>${data.notes}</em></p>`;
+
+        data.sessions.forEach(session => {
+          html += `<div class="session">`;
+          html += `<h2>${session.lift}${session.variation ? ' (' + session.variation + ')' : ''}</h2>`;
+          html += `<table>`;
+          html += `  <tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
+          session.sets.forEach(set => {
+            html += `  <tr>`;
+            html += `<td>${set.weight}</td><td>${set.reps}</td><td>${set.rpe}</td><td>${set.comment}</td>`;
+            html += `  </tr>`;
+          });
+          html += `</table>`;
+          html += `</div>`;
+        });
+
+        logContainer.innerHTML = html;
+      }
+    });
   </script>
 </body>
 </html>
