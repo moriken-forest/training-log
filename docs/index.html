@@ -57,7 +57,6 @@
       margin: var(--spacing) auto;
       padding: 0 var(--spacing);
     }
-    /* Calendar navigation */
     #calendarHeader {
       display: flex;
       justify-content: space-between;
@@ -84,7 +83,6 @@
       color: var(--text);
       font-weight: 600;
     }
-    /* Calendar grid */
     #calendar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -115,7 +113,6 @@
       font-weight: 600;
       border-color: var(--primary-dark);
     }
-    /* Log detail */
     #logContainer {
       background: var(--card-bg);
       border-radius: var(--radius);
@@ -140,23 +137,32 @@
       margin-bottom: .5rem;
       color: var(--text);
     }
+    /* テーブルのレスポンシブとワードラップ対応 */
+    .session .table-wrapper {
+      overflow-x: auto;
+      margin-bottom: var(--spacing);
+    }
     .session table {
       width: 100%;
       border-collapse: collapse;
-      border-radius: var(--radius);
-      overflow: hidden;
+      min-width: 600px;
     }
     .session th,
     .session td {
       border-bottom: 1px solid #e5e7eb;
       padding: 12px;
       text-align: center;
+      white-space: normal;
+      word-break: break-word;
     }
     .session th {
       background: var(--bg);
       font-weight: 600;
     }
     .session tr:last-child td { border-bottom: none; }
+    @media (max-width: 600px) {
+      .session th, .session td { padding: 8px; font-size: 0.875rem; }
+    }
   </style>
 </head>
 <body>
@@ -219,9 +225,10 @@
       html += `<p class="meta">ブロック: ${data.block ?? '-'} ｜ Week: ${data.week ?? '-'} ｜ Day: ${data.day ?? '-'}</p>`;
       if (data.notes) html += `<p><em>${data.notes}</em></p>`;
       data.sessions.forEach(session => {
-        html += `<div class="session"><h2>${session.lift}${session.variation? ' ('+session.variation+')':''}</h2><table><tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>1RM</th><th>e1RM</th><th>コメント</th></tr>`;
+        html += `<div class="session"><h2>${session.lift}${session.variation? ' ('+session.variation+')':''}</h2>`;
+        html += `<div class="table-wrapper"><table><tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>1RM</th><th>e1RM</th><th>コメント</th></tr>`;
         session.sets.forEach(s => html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s['1RM'] ?? '-'}</td><td>${s.e1RM ?? '-'}</td><td>${s.comment}</td></tr>`);
-        html += `</table></div>`;
+        html += `</table></div></div>`;
       });
       logContainer.innerHTML = html;
     }
