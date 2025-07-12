@@ -3,135 +3,147 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Training Log List View</title>
+  <title>Training Log Viewer</title>
   <style>
     body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
     header { text-align: center; margin-bottom: 20px; }
     header nav { margin-top: 10px; }
     header nav a { margin: 0 10px; text-decoration: none; color: #007acc; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background-color: #f4f4f4; text-align: left; }
-    tr.clickable { cursor: pointer; }
-    tr.clickable:hover { background-color: #f0f8ff; }
-    .detail-row td { background-color: #fafafa; padding: 10px; }
-    .session { margin-bottom: 15px; }
+    #calendarHeader { display: flex; justify-content: space-between; align-items: center; max-width: 600px; margin: 0 auto; }
+    #calendarHeader button { padding: 5px 10px; font-size: 1em; }
+    #calendarHeader h2 { margin: 0; font-size: 1.2em; }
+    #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; max-width: 600px; margin: 10px auto; }
+    .day-cell { border: 1px solid #ccc; padding: 10px; text-align: center; cursor: pointer; }
+    .day-cell.disabled { color: #999; cursor: default; }
+    .day-cell.has-log { background-color: #cfe3ff; }
+    .day-cell.selected { background-color: #a0c4ff; }
+    .session { margin-bottom: 20px; }
     .session h2 { margin-bottom: 5px; font-size: 1.1em; }
-    .session table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-    .session th, .session td { border: 1px solid #ddd; padding: 6px; text-align: center; }
-    .session th { background-color: #eaeaea; }
-    #pagination { text-align: center; margin: 10px 0; }
-    #pagination button { margin: 0 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background-color: #f4f4f4; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Training Log List View</h1>
-  </header>
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-    <label>表示件数:
-      <select id="pageSize">
-        <option value="10">10</option>
-        <option value="50">50</option>
-        <option value="100">100</option>
-      </select> 件
-    </label>
+    <h1>Training Log Viewer</h1>
     <nav>
-      <a href="index.html">🏠 カレンダー表示</a>
+      <a href="index.html">カレンダー表示</a> |
+      <a href="list.html">一覧表示</a>
     </nav>
+  </header>
+
+  <!-- カレンダー ヘッダー（ナビゲーション） -->
+  <div id="calendarHeader">
+    <button id="prevMonth">◀︎</button>
+    <h2 id="currentMonth"></h2>
+    <button id="nextMonth">▶︎</button>
   </div>
 
-  <table id="logList">
-    <thead>
-      <tr><th>日付</th><th>ノート</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <!-- カレンダー表示（日曜開始） -->
+  <div id="calendar"></div>
 
-  <div id="pagination"></div>
+  <main id="logContainer">
+    <p>カレンダーの日付をクリックしてください。</p>
+  </main>
 
   <script>
-    let logs = [];
-    let currentPage = 1;
-    let pageSize = 10;
-    const listBody = document.querySelector('#logList tbody');
-    const paginationEl = document.getElementById('pagination');
+    let availableDates = [];
+    const calendarEl = document.getElementById('calendar');
+    const logContainer = document.getElementById('logContainer');
+    const currentMonthEl = document.getElementById('currentMonth');
+    let viewYear, viewMonth;
 
-    function renderPagination() {
-      const totalPages = Math.ceil(logs.length / pageSize) || 1;
-      paginationEl.innerHTML = '';
-      const prevBtn = document.createElement('button');
-      prevBtn.textContent = '前へ';
-      prevBtn.disabled = currentPage === 1;
-      prevBtn.addEventListener('click', () => { currentPage--; renderList(); });
-      const nextBtn = document.createElement('button');
-      nextBtn.textContent = '次へ';
-      nextBtn.disabled = currentPage === totalPages;
-      nextBtn.addEventListener('click', () => { currentPage++; renderList(); });
-      const info = document.createElement('span');
-      info.textContent = ` ${currentPage} / ${totalPages} ページ`;
-      paginationEl.append(prevBtn, info, nextBtn);
-    }
-
-    function toggleDetail(row, log) {
-      const next = row.nextElementSibling;
-      if (next && next.classList.contains('detail-row')) {
-        next.remove();
-        return;
-      }
-      document.querySelectorAll('.detail-row').forEach(el => el.remove());
-      const detailTr = document.createElement('tr');
-      detailTr.classList.add('detail-row');
-      const td = document.createElement('td'); td.colSpan = 2;
-      let html = '';
-      log.sessions.forEach(session => {
-        html += `<div class="session"><h2>${session.lift}${session.variation ? ' ('+session.variation+')':''}</h2>`;
-        html += '<table><tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>';
-        session.sets.forEach(s => html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`);
-        html += '</table></div>';
+    // カレンダー再描画 (日曜始まり)
+    function renderCalendar(year, month) {
+      calendarEl.innerHTML = '';
+      currentMonthEl.textContent = `${year}年 ${month + 1}月`;
+      // 曜日ヘッダー
+      const weekdays = ['日','月','火','水','木','金','土'];
+      weekdays.forEach(w => {
+        const th = document.createElement('div');
+        th.textContent = w;
+        th.style.fontWeight = 'bold';
+        calendarEl.appendChild(th);
       });
-      td.innerHTML = html;
-      detailTr.appendChild(td);
-      row.parentNode.insertBefore(detailTr, row.nextSibling);
-    }
-
-    function renderList() {
-      listBody.innerHTML = '';
-      if (logs.length === 0) {
-        listBody.innerHTML = '<tr><td colspan="2">ログがありません</td></tr>';
-        paginationEl.innerHTML = '';
-        return;
+      // 空セル
+      const firstDay = new Date(year, month, 1).getDay();
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'day-cell disabled';
+        calendarEl.appendChild(empty);
       }
-      const start = (currentPage - 1) * pageSize;
-      const end = start + pageSize;
-      logs.slice(start, end).forEach(log => {
-        const tr = document.createElement('tr');
-        tr.classList.add('clickable');
-        tr.innerHTML = `<td>${log.date}</td><td>${log.notes || ''}</td>`;
-        tr.addEventListener('click', () => toggleDetail(tr, log));
-        listBody.appendChild(tr);
-      });
-      renderPagination();
+      // 日セル
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const cell = document.createElement('div');
+        cell.className = 'day-cell';
+        cell.textContent = d;
+        if (availableDates.includes(dateStr)) {
+          cell.classList.add('has-log');
+          cell.addEventListener('click', () => {
+            document.querySelectorAll('.day-cell.selected').forEach(e => e.classList.remove('selected'));
+            cell.classList.add('selected');
+            fetchLog(dateStr);
+          });
+        } else {
+          cell.classList.add('disabled');
+        }
+        calendarEl.appendChild(cell);
+      }
     }
 
-    document.getElementById('pageSize').addEventListener('change', e => {
-      pageSize = parseInt(e.target.value);
-      currentPage = 1;
-      renderList();
-    });
-
-    function init() {
-      fetch('./logs/index.json')
-        .then(res => { if (!res.ok) throw new Error('インデックスが見つかりません'); return res.json(); })
-        .then(dates => Promise.all(dates.map(d => fetch(`./logs/${d}.json`).then(r => r.json()))))
+    // ログ取得＆表示
+    function fetchLog(date) {
+      fetch(`./logs/${date}.json`)
+        .then(res => {
+          if (!res.ok) throw new Error('ログが見つかりません');
+          return res.json();
+        })
         .then(data => {
-          logs = data.sort((a, b) => a.date < b.date ? 1 : -1);
-          renderList();
+          let html = `<h2>${data.date} のトレーニング記録</h2>`;
+          if (data.notes) html += `<p><em>${data.notes}</em></p>`;
+          data.sessions.forEach(session => {
+            html += `<div class="session">`;
+            html += `<h2>${session.lift}${session.variation ? ' ('+session.variation+')':''}</h2>`;
+            html += `<table>`;
+            html += `<tr><th>重量(kg)</th><th>回数</th><th>RPE</th><th>コメント</th></tr>`;
+            session.sets.forEach(s => {
+              html += `<tr><td>${s.weight}</td><td>${s.reps}</td><td>${s.rpe}</td><td>${s.comment}</td></tr>`;
+            });
+            html += `</table></div>`;
+          });
+          logContainer.innerHTML = html;
         })
         .catch(err => {
-          console.error(err);
-          listBody.innerHTML = `<tr><td colspan="2">${err.message}</td></tr>`;
+          logContainer.innerHTML = `<p>${err.message}</p>`;
         });
+    }
+
+    // 初期化
+    function init() {
+      const today = new Date();
+      viewYear = today.getFullYear();
+      viewMonth = today.getMonth();
+      fetch('./logs/index.json')
+        .then(res => {
+          if (!res.ok) throw new Error('インデックスが見つかりません');
+          return res.json();
+        })
+        .then(dates => {
+          availableDates = dates;
+          renderCalendar(viewYear, viewMonth);
+        })
+        .catch(err => console.error(err));
+      document.getElementById('prevMonth').addEventListener('click', () => {
+        viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+        renderCalendar(viewYear, viewMonth);
+      });
+      document.getElementById('nextMonth').addEventListener('click', () => {
+        viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+        renderCalendar(viewYear, viewMonth);
+      });
     }
     init();
   </script>
